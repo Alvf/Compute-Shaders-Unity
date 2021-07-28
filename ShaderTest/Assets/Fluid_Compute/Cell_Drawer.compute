@@ -1,0 +1,97 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel Velo_Color
+#pragma kernel iso_Color
+#define PI 3.14159265
+
+struct Cell{
+    float den;
+    float vx;
+    float vy;
+};
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+RWStructuredBuffer<Cell> cells;
+int width;
+int height;
+float sat;
+float dark;
+float4 color;
+float4 bkg;
+float4 inner;
+float lb;
+float ub;
+
+float4 hsv_to_rgb(float h, float s ,float v){
+    float c = s * (1 - abs(2 * v - 1));
+    float hn = h / 60;
+    float m = v - c / 2;
+    float x = c * (1 - abs(fmod(hn, 2) - 1));
+    float3 rgb0;
+    if (0 <= h && h < 60){
+        rgb0 = float3(c, x, 0);
+    }
+    else if (60 <= h && h < 120){
+        rgb0 = float3(x, c, 0);
+    }
+    else if (120 <= h && h < 180){
+        rgb0 = float3(0, c, x);
+    }
+    else if (180 <= h && h < 240){
+        rgb0 = float3(0, x, c);
+    }
+    else if (240 <= h && h < 300){
+        rgb0 = float3(x, 0, c);
+    }
+    else if (300 <= h && h < 360){
+        rgb0 = float3(c, 0, x);
+    }
+    return float4((rgb0.x + m), (rgb0.y + m), (rgb0.z + m), 1);
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    int p = id.x + width * id.y;
+    float sat = cells[p].den;
+    float4 res = float4(color.r * sat, color.g * sat, color.b * sat, color.a * sat);
+    res = res + float4((1-sat) * bkg.r, (1-sat) * bkg.g, (1-sat) * bkg.b, (1-sat) * bkg.a);
+    Result[id.xy] = res;
+}
+
+[numthreads(8,8,1)]
+void Velo_Color (uint3 id : SV_DispatchThreadID)
+{
+    int p = id.x + width * id.y;
+
+    float H;
+    float th = atan(cells[p].vy/cells[p].vx);
+    if (cells[p].vx >= 0){
+        H = th;
+    }
+    else{
+        H = PI + th;
+    }
+    H = (H + PI / 2) / (2 * PI) * 360;
+
+    Result[id.xy] = hsv_to_rgb(H, sat, dark);
+}
+
+[numthreads(8,8,1)]
+void iso_Color(uint3 id : SV_DispatchThreadID)
+{
+    int p = id.x + width * id.y;
+    float sat = cells[p].den;
+    if (lb <= sat && sat <= ub)
+    {
+        Result[id.xy] = color;
+    }
+    else if (sat > ub){
+        Result[id.xy] = inner;
+    }
+    else{
+        Result[id.xy] = bkg;
+    }
+}

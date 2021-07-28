@@ -1,0 +1,45 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel stir
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+struct Cell{
+    float den;
+    float vx;
+    float vy;
+};
+RWStructuredBuffer<Cell> cells;
+float2 mousePos;
+float paintAmount;
+float paintmax;
+float brushrad;
+float stirrad;
+int width;
+
+float2 dmouse;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    int u = mousePos.x - id.x;
+    int v = mousePos.y - id.y;
+    if(u* u + v * v <= brushrad * brushrad){
+        int pos = id.x + id.y * width;
+        cells[pos].den = min(cells[pos].den + paintAmount, paintmax);
+    }
+}
+
+[numthreads(8,8,1)]
+void stir (uint3 id : SV_DispatchThreadID)
+{
+    int u = mousePos.x - id.x;
+    int v = mousePos.y - id.y;
+    float rad2 = u * u + v * v;
+    float stirrad2 = stirrad * stirrad;
+    if(rad2 <= stirrad2){
+        int pos = id.x + id.y * width;
+        cells[pos].vx += dmouse.x * (1 - rad2 / stirrad2);
+        cells[pos].vy += dmouse.y * (1 - rad2 / stirrad2);
+    }
+}

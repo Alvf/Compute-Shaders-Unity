@@ -1,0 +1,36 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+struct Point{
+    float x;
+    float y;
+    float theta;
+};
+float dt;
+float v;
+int width;
+int height;
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+RWStructuredBuffer<Point> points;
+
+[numthreads(16,16,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    int ind = id.x + 16 * id.y;
+    Point p = points[ind];
+    Result[int2(p.x,p.y)] += 1;
+    float x1 = p.x + v * cos(p.theta);
+    float y1 = p.y + v * sin(p.theta);
+    if (x1 >= width || x1 < 0){
+        x1 = max(0.01, min(width-0.01, x1));
+        points[ind].theta = 3.1415f - points[ind].theta;
+    }
+    if (y1 >= height || y1 < 0){
+        y1 = max(0.01, min(height-0.01, y1));
+        points[ind].theta = -points[ind].theta;
+    }
+    points[ind].x = x1;
+    points[ind].y = y1;
+}

@@ -1,0 +1,142 @@
+// Each #kernel tells which function to compile; you can have many kernels
+// This compute shader handles diffusion of velocity and density
+#pragma kernel Diffuse_Den
+#pragma kernel Diffuse_Velo
+#pragma kernel Advect_Den
+#pragma kernel Advect_Velo
+// #pragma kernel divergence
+// #pragma kernel project
+// #pragma kernel Velo_from_project
+
+struct Cell{
+    float den;
+    float vx;
+    float vy;
+};
+
+RWStructuredBuffer<Cell> cells_in;
+RWStructuredBuffer<Cell> cells_out;
+
+int width;
+int height;
+float diff;
+float fade;
+float dt;
+
+int pos(int x, int y){
+    return x + width * y;
+}
+
+[numthreads(8,8,1)] //KernelID 0: diffuse density and fade density
+void Diffuse_Den (uint3 id : SV_DispatchThreadID)
+{
+    // Jacobi iteration on density diffusion; takes in and sets out.
+    float a = diff * dt * width * height;
+    int p = pos(id.x,id.y);
+    cells_out[p].den = (cells_in[p].den + a*(cells_in[pos(id.x-1, id.y)].den + cells_in[pos(id.x+1,id.y)].den 
+                      + cells_in[pos(id.x,id.y+1)].den + cells_in[pos(id.x,id.y-1)].den))/(1 + 4 * a);
+    cells_out[p].den = cells_out[p].den + dt * fade;
+    cells_out[p].vx = cells_in[p].vx;
+    cells_out[p].vy = cells_in[p].vy;
+}
+
+[numthreads(8,8,1)] //KernelID 1: diffuse vx and vy
+void Diffuse_Velo (uint3 id : SV_DispatchThreadID)
+{
+    // Jacobi iteration on density diffusion
+    float a = diff * dt * width * height;
+    int p = pos(id.x,id.y);
+    cells_out[p].vx = (cells_in[p].vx + a*(cells_in[pos(id.x-1, id.y)].vx + cells_in[pos(id.x+1,id.y)].vx
+                      + cells_in[pos(id.x,id.y+1)].vx + cells_in[pos(id.x,id.y-1)].vx))/(1 + 4 * a);
+    cells_out[p].vy = (cells_in[p].vy + a*(cells_in[pos(id.x-1, id.y)].vy + cells_in[pos(id.x+1,id.y)].vy
+                      + cells_in[pos(id.x,id.y+1)].vy + cells_in[pos(id.x,id.y-1)].vy))/(1 + 4 * a);  
+    cells_out[p].den = cells_in[p].den;            
+}
+
+[numthreads(8,8,1)] //KernelID 2: advect density
+void Advect_Den(uint3 id : SV_DispatchThreadID)
+{
+    // Bilinear backtrace on each cell with vx and vy
+    float x, y, s0, t0, s1, t1;
+    int i0, i1, j0, j1;
+    float dtx = dt * width;
+    float dty = dt * height;
+    int p = pos(id.x, id.y);
+
+    x = id.x - dtx * cells_in[p].vx;
+    y = id.y - dty * cells_in[p].vy;
+    if (x < 0.5) x = 0.5; if (y < 0.5) y = 0.5;
+    if (x > width - 0.5) x = width - 0.5; if (y > height - 0.5) y = height - 0.5;
+    i0 = (int)x; i1 = i0 + 1; j0 = (int)y; j1 = j0 + 1;
+    s1 = x - i0; s0 = 1 - s1; t1 = y - j0; t0 = 1 - t1;
+
+    cells_out[p].den = s0 * (t0 * cells_in[pos(i0, j0)].den + t1 * cells_in[pos(i0, j1)].den) +
+                      s1 * (t0 * cells_in[pos(i1, j0)].den + t1 * cells_in[pos(i1, j1)].den); 
+    cells_out[p].vx = cells_in[p].vx;
+    cells_out[p].vy = cells_in[p].vy;
+}
+
+[numthreads(8,8,1)] //KernelID 3: advects vx and vy
+void Advect_Velo(uint3 id : SV_DispatchThreadID)
+{
+    // Bilinear backtrace on each cell with vx and vy
+    float x, y, s0, t0, s1, t1;
+    int i0, i1, j0, j1;
+    float dtx = dt * width;
+    float dty = dt * height;
+    int p = pos(id.x, id.y);
+
+    x = id.x - dtx * cells_in[p].vx;
+    y = id.y - dty * cells_in[p].vy;
+    if (x < 0.5) x = 0.5; if (y < 0.5) y = 0.5;
+    if (x > width - 0.5) x = width - 0.5; if (y > height - 0.5) y = height - 0.5;
+    i0 = (int)x; i1 = i0 + 1; j0 = (int)y; j1 = j0 + 1;
+    s1 = x - i0; s0 = 1 - s1; t1 = y - j0; t0 = 1 - t1;
+
+    cells_out[p].vx = s0 * (t0 * cells_in[pos(i0, j0)].vx + t1 * cells_in[pos(i0, j1)].vx) +
+                      s1 * (t0 * cells_in[pos(i1, j0)].vx + t1 * cells_in[pos(i1, j1)].vx); 
+    cells_out[p].vy = s0 * (t0 * cells_in[pos(i0, j0)].vy + t1 * cells_in[pos(i0, j1)].vy) +
+                      s1 * (t0 * cells_in[pos(i1, j0)].vy + t1 * cells_in[pos(i1, j1)].vy);
+    cells_out[p].den = cells_in[p].den; 
+}
+
+// RWStructuredBuffer<float> div;
+// RWStructuredBuffer<float> p_in;
+// RWStructuredBuffer<float> p_out;
+
+// [numthreads(8,8,1)]
+// void divergence(uint3 id : SV_DispatchThreadID) //kernel ID 4
+// {
+//     // Calculates divergence
+//     float hx, hy;
+
+//     hx = 1.0 / width;
+//     hy = 1.0 / height;
+
+//     int p = pos(id.x, id.y);
+
+//     div[p] = -0.5 * ((cells_in[pos(id.x + 1, id.y)].vx - cells_in[pos(id.x -1 , id.y)].vx) * hx + 
+//                                (cells_in[pos(id.x, id.y + 1)].vy - cells_in[pos(id.x, id.y - 1)].vy) * hy);
+// }
+
+// [numthreads(8,8,1)]
+// void project(uint3 id : SV_DispatchThreadID) //kernel ID 5
+// {
+//     // Does one Jacobi iteration to zero in on proper p values, using p_in and sending to p_out
+//     int p = pos(id.x, id.y);
+
+//     p_out[p] = (div[p] + p_in[pos(id.x - 1, id.y)] + p_in[pos(id.x + 1, id.y)] + 
+//                          p_in[pos(id.x, id.y - 1)] + p_in[pos(id.x, id.y + 1)]) / 4;
+// }
+
+// [numthreads(8,8,1)]
+// void Velo_from_project(uint3 id : SV_DispatchThreadID) //kernel ID 6
+// {
+//     //Takes projections as finalized in cells_in.vy values and sets cells_out.vx and vy
+//     int p = pos(id.x, id.y);
+//     float hx = 1.0 / width;
+//     float hy = 1.0 / height;
+
+//     cells_out[p].vx = cells_in[p].vx - 0.5 * (p_in[pos(id.x + 1, id.y)] - p_in[pos(id.x - 1, id.y)]) / hx;
+//     cells_out[p].vy = cells_in[p].vy - 0.5 * (p_in[pos(id.x, id.y + 1)] - p_in[pos(id.x, id.y - 1)]) / hy;
+// }

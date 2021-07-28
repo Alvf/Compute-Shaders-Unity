@@ -1,0 +1,35 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Vort_Conf
+
+struct Cell{
+    float den;
+    float vx;
+    float vy;
+};
+RWStructuredBuffer<Cell> cells;
+int width;
+int height;
+float vorticity;
+float dt;
+
+int pos(int x, int y){
+    return x + width * y;
+}
+
+float curl(int x, int y){
+    
+    return cells[pos(x, y+1)].vx - cells[pos(x, y-1)].vx + cells[pos(x-1, y)].vy - cells[pos(x+1, y)].vy;
+}
+
+[numthreads(8,8,1)]
+void Vort_Conf (uint3 id : SV_DispatchThreadID)
+{
+    int p = pos(id.x, id.y);
+    float dx = abs(curl(id.x, id.y - 1)) - abs(curl(id.x, id.y + 1));
+    float dy = abs(curl(id.x + 1, id.y)) - abs(curl(id.x - 1, id.y));
+    float len = sqrt(dx * dx + dy * dy) + 0.00001;
+    dx = vorticity / len  * dx;
+    dy = vorticity / len * dy;
+    cells[p].vx = cells[p].vx + dt * curl(id.x, id.y) * dx;
+    cells[p].vy = cells[p].vy + dt * curl(id.x, id.y) * dy;
+}

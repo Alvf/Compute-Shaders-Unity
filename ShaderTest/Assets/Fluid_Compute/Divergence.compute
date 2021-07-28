@@ -1,0 +1,61 @@
+// Each #kernel tells which function to compile; you can have many kernels
+// This compute shader deals with the projcetion of the velocity field into one with no divergence
+#pragma kernel divergence
+#pragma kernel project
+#pragma kernel Velo_from_project
+
+struct Cell{
+    float den;
+    float vx;
+    float vy;
+};
+
+RWStructuredBuffer<Cell> cells_in;
+RWStructuredBuffer<Cell> cells_out;
+RWStructuredBuffer<float> div;
+RWStructuredBuffer<float> p_in;
+RWStructuredBuffer<float> p_out;
+int width;
+int height;
+
+int pos(int x, int y){
+    return x + width * y;
+}
+
+[numthreads(8,8,1)]
+void divergence(uint3 id : SV_DispatchThreadID)
+{
+    // Calculates divergence and resets p
+    float hx, hy;
+
+    hx = 1.0 / width;
+    hy = 1.0 / height;
+
+    int p = pos(id.x, id.y);
+
+    div[p] = -0.5 * ((cells_in[pos(id.x + 1, id.y)].vx - cells_in[pos(id.x -1 , id.y)].vx) * hx + 
+                     (cells_in[pos(id.x, id.y + 1)].vy - cells_in[pos(id.x, id.y - 1)].vy) * hy);
+    p_in[p] = 0;
+}
+
+[numthreads(8,8,1)]
+void project(uint3 id : SV_DispatchThreadID)
+{
+    // Does one Jacobi iteration to zero in on proper p values, using p_in and sending to p_out
+    int p = pos(id.x, id.y);
+
+    p_out[p] = (div[p] + p_in[pos(id.x - 1, id.y)] + p_in[pos(id.x + 1, id.y)] + 
+                         p_in[pos(id.x, id.y - 1)] + p_in[pos(id.x, id.y + 1)]) / 4;
+}
+
+[numthreads(8,8,1)]
+void Velo_from_project(uint3 id : SV_DispatchThreadID)
+{
+    //Takes projections as finalized in cells_in.vy values and sets cells_out.vx and vy
+    int p = pos(id.x, id.y);
+    float hx = 1.0 / width;
+    float hy = 1.0 / height;
+
+    cells_in[p].vx = cells_in[p].vx - 0.5 * (p_in[pos(id.x + 1, id.y)] - p_in[pos(id.x - 1, id.y)]) / hx;
+    cells_in[p].vy = cells_in[p].vy - 0.5 * (p_in[pos(id.x, id.y + 1)] - p_in[pos(id.x, id.y - 1)]) / hy;
+}

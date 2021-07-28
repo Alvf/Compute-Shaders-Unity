@@ -1,0 +1,22 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+float Resolutionx;
+float Resolutiony;
+float4 _SinTime;
+float2 MouseP;
+
+float lerp(float x0, float x1, float t){
+    return x1 * t + x0 * (1 - t);
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float x = id.x / Resolutionx;
+    float y = id.y / Resolutiony;
+    Result[id.xy] = float4(MouseP.x, lerp(x, y, MouseP.y), lerp(y, x, MouseP.y), 1.0);
+}

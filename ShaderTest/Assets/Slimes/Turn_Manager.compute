@@ -1,0 +1,76 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+#define PI 3.14159265358979323846
+#define FLT_MAX 3.402823466e+38
+
+struct Slime{
+    float x;
+    float y;
+    float theta;
+};
+
+RWStructuredBuffer<Slime> slimes;
+RWTexture2D<float4> trails;
+RWTexture2D<float4> finalout;
+int width;
+int height;
+float dt;
+float tStrength;
+float sStrength;
+float sSize;
+float4 finalCol;
+float sensorOffsetFactor;
+float sensorAngle;
+
+float sense(int2 pos){
+
+    float sum = 0;
+
+    int min_x = max(0, pos.x - sSize);
+    int max_x = min(pos.x + sSize, width);
+    int min_y = max(0, pos.y - sSize);
+    int max_y = min(pos.y + sSize, height);
+    
+    for (int i = min_x; i <= max_x; i++){
+        for (int j = min_y; j <= max_y; j++){
+            sum += (float)trails[int2(i, j)];
+        }
+    }
+
+    return sum;
+}
+
+float rand01(uint seed) {
+    seed ^= 2747636419u;
+    seed *= 2654435769u;
+    seed ^= seed >> 16;
+    seed *= 2654435769u;
+    seed ^= seed >> 16;
+    seed *= 2654435769u;
+    return seed / 4294967295.0;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    int ind = id.x + 8 * id.y;
+    Slime s = slimes[ind];
+    
+    float2 orig = float2(s.x, s.y);
+    float th1 = s.theta - sensorAngle * PI / 180;
+    float th3 = s.theta + sensorAngle * PI / 180;
+    float2 s1 = orig + (sStrength * sensorOffsetFactor) * float2(cos(th1), sin(th1));
+    float2 s2 = orig + sStrength * float2(cos(s.theta), sin(s.theta));
+    float2 s3 = orig + (sStrength * sensorOffsetFactor) * float2(cos(th3), sin(th3));
+    float den1 = sense((int2)s1);
+    float den2 = sense((int2)s2);
+    float den3 = sense((int2)s3);
+    float maxden = max(den1, max(den2, den3));
+
+    float tf = maxden == den1 ? -1 : (maxden == den2 ? 0 : 1);
+
+    slimes[ind].theta += rand01(ind) * tStrength * tf;
+
+    finalout[id.xy] = (float)trails[id.xy] * finalCol;
+}

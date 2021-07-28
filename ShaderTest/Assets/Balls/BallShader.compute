@@ -1,0 +1,37 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+struct Ball{
+    float x;
+    float y;
+    float vx;
+    float vy;
+};
+float dt;
+float width;
+float height;
+RWTexture2D<float4> Result;
+RWStructuredBuffer<Ball> balls;
+
+[numthreads(16,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+
+    Ball b = balls[id.x];
+
+    float x1 = b.x + b.vx * dt;
+    float y1 = b.y + b.vy * dt;
+
+    if (!(0 < b.position.x < width)) {
+        x1 = min(max(0, x1), width - 0.01);
+        balls[id.x].vx *= -1;
+    }
+    if (!(0 < b.position.y < height)) {
+        y1 = min(max(0, y1), height - 0.01);
+        balls[id.x].vy *= -1;
+    }
+
+    balls[id.x].x = x1;
+    balls[id.x].y = y1;
+    Result[int2(newpos.x, newpos.y)] = 1;
+}

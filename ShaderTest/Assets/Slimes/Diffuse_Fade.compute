@@ -1,0 +1,32 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+RWTexture2D<float4> Input_Texture;
+RWTexture2D<float4> Diff_Faded_Texture;
+
+int width;
+int height;
+float diff;
+float fade;
+float dt;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    int min_x = max(0, (int)id.x - 1);
+    int max_x = min(width, (int)id.x + 1);
+    int min_y = max(0, (int)id.y -1 );
+    int max_y = min(height, (int)id.y + 1);
+    
+    float sum;
+
+    for (int l = min_x; l <= max_x; l++){
+        for (int j = min_y; j <= max_y; j++){
+            sum += (float)Input_Texture[int2(l, j)];
+        }
+    }
+    float avg = sum / 9;
+    Diff_Faded_Texture[id.xy] = (1 - dt * diff) * Input_Texture[id.xy] + dt * diff * avg;
+    Diff_Faded_Texture[id.xy] -= dt * fade;
+
+}
