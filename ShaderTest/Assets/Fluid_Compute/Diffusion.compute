@@ -4,6 +4,8 @@
 #pragma kernel Diffuse_Velo
 #pragma kernel Advect_Den
 #pragma kernel Advect_Velo
+#pragma kernel Set_Bound_Den
+#pragma kernel Set_Bound_Velo
 // #pragma kernel divergence
 // #pragma kernel project
 // #pragma kernel Velo_from_project
@@ -12,6 +14,7 @@ struct Cell{
     float den;
     float vx;
     float vy;
+    int bnd;
 };
 
 RWStructuredBuffer<Cell> cells_in;
@@ -74,6 +77,7 @@ void Advect_Den(uint3 id : SV_DispatchThreadID)
                       s1 * (t0 * cells_in[pos(i1, j0)].den + t1 * cells_in[pos(i1, j1)].den); 
     cells_out[p].vx = cells_in[p].vx;
     cells_out[p].vy = cells_in[p].vy;
+    cells_out[p].bnd = cells_in[p].bnd;
 }
 
 [numthreads(8,8,1)] //KernelID 3: advects vx and vy
@@ -98,8 +102,78 @@ void Advect_Velo(uint3 id : SV_DispatchThreadID)
     cells_out[p].vy = s0 * (t0 * cells_in[pos(i0, j0)].vy + t1 * cells_in[pos(i0, j1)].vy) +
                       s1 * (t0 * cells_in[pos(i1, j0)].vy + t1 * cells_in[pos(i1, j1)].vy);
     cells_out[p].den = cells_in[p].den; 
+    cells_out[p].bnd = cells_in[p].bnd;
 }
 
+[numthreads(8,8,1)] //KernelID 4: sets bnd for density after density diffusion/advection
+void Set_Bound_Den(uint3 id : SV_DispatchThreadID)
+{
+    int p = pos(id.x, id.y);
+    if (cells_out[p].bnd == 0){
+        return;
+    }
+    //left check
+    if (id.x - 1 >= 0){
+        if (cells_out[pos(id.x - 1, id.y)].bnd == 0){
+            cells_out[p].den = cells_out[p - 1].den;
+            return;
+        }
+    }
+    //right check
+    if (id.x + 1 < width){
+        if (cells_out[pos(id.x + 1, id.y)].bnd == 0){
+            cells_out[p].den = cells_out[p + 1].den;
+            return;
+        }
+    }
+    //up check
+    if (id.y + 1 < height){
+        if (cells_out[pos(id.x, id.y + 1)].bnd == 0){
+            cells_out[p].den = cells_out[pos(id.x, id.y + 1)].den;
+            return;
+        }
+    }
+    //down check
+    if (id.y - 1 >= 0){
+        if (cells_out[pos(id.x, id.y - 1)].bnd == 0){
+            cells_out[p].den = cells_out[pos(id.x, id.y - 1)].den;
+            return;
+        }
+    }
+}
+
+[numthreads(8, 8, 1)] //KernelID 5: sets bnd for x and y velocities
+void Set_Bound_Velo(uint3 id : SV_DispatchThreadID)
+{
+    int p = pos(id.x, id.y);
+    if (cells_out[p].bnd == 0){
+        return;
+    }
+    //left check
+    if (id.x - 1 >= 0){
+        if (cells_out[pos(id.x - 1, id.y)].bnd == 0){
+            cells_out[p].vx = -cells_out[p - 1].vx;
+        }
+    }
+    //right check
+    if (id.x + 1 < width){
+        if (cells_out[pos(id.x + 1, id.y)].bnd == 0){
+            cells_out[p].vx = -cells_out[p + 1].vx;
+        }
+    }
+    //up check
+    if (id.y + 1 < height){
+        if (cells_out[pos(id.x, id.y + 1)].bnd == 0){
+            cells_out[p].vy = -cells_out[pos(id.x, id.y + 1)].vy;
+        }
+    }
+    //down check
+    if (id.y - 1 >= 0){
+        if (cells_out[pos(id.x, id.y - 1)].bnd == 0){
+            cells_out[p].vy = -cells_out[pos(id.x, id.y - 1)].vy;
+        }
+    }
+}
 // RWStructuredBuffer<float> div;
 // RWStructuredBuffer<float> p_in;
 // RWStructuredBuffer<float> p_out;

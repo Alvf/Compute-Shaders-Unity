@@ -8,6 +8,7 @@ struct Cell{
     float den;
     float vx;
     float vy;
+    int bnd;
 };
 RWStructuredBuffer<Cell> cells;
 float2 mousePos;

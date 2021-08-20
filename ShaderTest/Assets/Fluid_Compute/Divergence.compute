@@ -3,15 +3,17 @@
 #pragma kernel divergence
 #pragma kernel project
 #pragma kernel Velo_from_project
+#pragma kernel Set_Bound_Velo
+#pragma kernel Set_Bound_p
 
 struct Cell{
     float den;
     float vx;
     float vy;
+    int bnd;
 };
 
 RWStructuredBuffer<Cell> cells_in;
-RWStructuredBuffer<Cell> cells_out;
 RWStructuredBuffer<float> div;
 RWStructuredBuffer<float> p_in;
 RWStructuredBuffer<float> p_out;
@@ -23,7 +25,7 @@ int pos(int x, int y){
 }
 
 [numthreads(8,8,1)]
-void divergence(uint3 id : SV_DispatchThreadID)
+void divergence(uint3 id : SV_DispatchThreadID) //ID 0
 {
     // Calculates divergence and resets p
     float hx, hy;
@@ -39,7 +41,7 @@ void divergence(uint3 id : SV_DispatchThreadID)
 }
 
 [numthreads(8,8,1)]
-void project(uint3 id : SV_DispatchThreadID)
+void project(uint3 id : SV_DispatchThreadID) //ID 1
 {
     // Does one Jacobi iteration to zero in on proper p values, using p_in and sending to p_out
     int p = pos(id.x, id.y);
@@ -49,13 +51,120 @@ void project(uint3 id : SV_DispatchThreadID)
 }
 
 [numthreads(8,8,1)]
-void Velo_from_project(uint3 id : SV_DispatchThreadID)
+void Velo_from_project(uint3 id : SV_DispatchThreadID) //ID 2
 {
-    //Takes projections as finalized in cells_in.vy values and sets cells_out.vx and vy
+    //Takes projections as finalized in cells_in.vy values and sets cells_in.vx and vy
     int p = pos(id.x, id.y);
     float hx = 1.0 / width;
     float hy = 1.0 / height;
 
     cells_in[p].vx = cells_in[p].vx - 0.5 * (p_in[pos(id.x + 1, id.y)] - p_in[pos(id.x - 1, id.y)]) / hx;
     cells_in[p].vy = cells_in[p].vy - 0.5 * (p_in[pos(id.x, id.y + 1)] - p_in[pos(id.x, id.y - 1)]) / hy;
+}
+
+[numthreads(8, 8, 1)] //KernelID 3: sets bnd for x and y velocities
+void Set_Bound_Velo(uint3 id : SV_DispatchThreadID)
+{
+    int p = pos(id.x, id.y);
+    if (cells_in[p].bnd == 0){
+        return;
+    }
+    //left check
+    if (id.x - 1 >= 0){
+        if (cells_in[pos(id.x - 1, id.y)].bnd == 0){
+            cells_in[p].vx = -cells_in[p - 1].vx;
+        }
+    }
+    //right check
+    if (id.x + 1 < width){
+        if (cells_in[pos(id.x + 1, id.y)].bnd == 0){
+            cells_in[p].vx = -cells_in[p + 1].vx;
+        }
+    }
+    //up check
+    if (id.y + 1 < height){
+        if (cells_in[pos(id.x, id.y + 1)].bnd == 0){
+            cells_in[p].vy = -cells_in[pos(id.x, id.y + 1)].vy;
+        }
+    }
+    //down check
+    if (id.y - 1 >= 0){
+        if (cells_in[pos(id.x, id.y - 1)].bnd == 0){
+            cells_in[p].vy = -cells_in[pos(id.x, id.y - 1)].vy;
+        }
+    }
+}
+
+[numthreads(8,8,1)] //KernelID 4: sets bnd for density after density diffusion/advection
+void Set_Bound_p(uint3 id : SV_DispatchThreadID)
+{
+    int p = pos(id.x, id.y);
+    if (cells_in[p].bnd == 0){
+        return;
+    }
+    //left check
+    if (id.x - 1 >= 0){
+        if (cells_in[pos(id.x - 1, id.y)].bnd == 0){
+            p_out[p] = p_out[p - 1];
+            return;
+        }
+    }
+    //right check
+    if (id.x + 1 < width){
+        if (cells_in[pos(id.x + 1, id.y)].bnd == 0){
+            p_out[p] = p_out[p + 1];
+            return;
+        }
+    }
+    //up check
+    if (id.y + 1 < height){
+        if (cells_in[pos(id.x, id.y + 1)].bnd == 0){
+            p_out[p] = p_out[pos(id.x, id.y + 1)];
+            return;
+        }
+    }
+    //down check
+    if (id.y - 1 >= 0){
+        if (cells_in[pos(id.x, id.y - 1)].bnd == 0){
+            p_out[p] = p_out[pos(id.x, id.y - 1)];
+            return;
+        }
+    }
+}
+
+[numthreads(8,8,1)] //KernelID 5: sets bnd for divergence after its calculation
+void Set_Bound_div(uint3 id : SV_DispatchThreadID)
+{
+    int p = pos(id.x, id.y);
+    if (cells_in[p].bnd == 0){
+        return;
+    }
+    //left check
+    if (id.x - 1 >= 0){
+        if (cells_in[pos(id.x - 1, id.y)].bnd == 0){
+            div[p] = div[p - 1];
+            return;
+        }
+    }
+    //right check
+    if (id.x + 1 < width){
+        if (cells_in[pos(id.x + 1, id.y)].bnd == 0){
+            div[p] = div[p + 1];
+            return;
+        }
+    }
+    //up check
+    if (id.y + 1 < height){
+        if (cells_in[pos(id.x, id.y + 1)].bnd == 0){
+            div[p] = div[pos(id.x, id.y + 1)];
+            return;
+        }
+    }
+    //down check
+    if (id.y - 1 >= 0){
+        if (cells_in[pos(id.x, id.y - 1)].bnd == 0){
+            div[p] = div[pos(id.x, id.y - 1)];
+            return;
+        }
+    }
 }

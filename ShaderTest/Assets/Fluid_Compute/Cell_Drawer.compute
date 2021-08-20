@@ -8,6 +8,7 @@ struct Cell{
     float den;
     float vx;
     float vy;
+    int bnd;
 };
 
 // Create a RenderTexture with enableRandomWrite flag and set it

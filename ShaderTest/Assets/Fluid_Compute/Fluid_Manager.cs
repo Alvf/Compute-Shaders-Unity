@@ -6,6 +6,7 @@ struct Cell{
     public float den;
     public float vx;
     public float vy;
+    public int boundary;
 };
 public class Fluid_Manager : MonoBehaviour
 {
@@ -43,8 +44,7 @@ public class Fluid_Manager : MonoBehaviour
     public float lower_iso, upper_iso;
     int spacetoggle;
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start(){
         if (!diffusein){
             diffusein = new RenderTexture(xres, yres, 24);
             diffusein.enableRandomWrite = true;
@@ -65,9 +65,11 @@ public class Fluid_Manager : MonoBehaviour
             cells0[i].den = 0;
             cells0[i].vx = 0;
             cells0[i].vy = 0;
+            cells0[i].boundary = 0;
             cells1[i].den = 0;
             cells1[i].vx = 0;
             cells1[i].vy = 0;
+            cells1[i].boundary = 0;
             p0[i] = 0;
             p1[i] = 0;
             div[i] = 0;
@@ -83,6 +85,8 @@ public class Fluid_Manager : MonoBehaviour
     }
 
     void OnRenderImage(RenderTexture src, RenderTexture dest){ 
+        // TODO: boundaries in the domain and drawing/displaying walls.
+        // Need to call subroutines
         cur_pos = Input.mousePosition;
         screen_interact(cur_pos, last_pos);
         // source_placing();
@@ -101,7 +105,7 @@ public class Fluid_Manager : MonoBehaviour
         painter.SetFloat("brushrad", brushrad);
 
         if (Input.GetMouseButton(0)){
-            ComputeBuffer buff0 = new ComputeBuffer(numcells, sizeof(float) * 3);
+            ComputeBuffer buff0 = new ComputeBuffer(numcells, sizeof(float) * 4);
             buff0.SetData(cells0);
             painter.SetBuffer(0 , "cells", buff0);
             painter.Dispatch(0, xres/8, yres/8, 1);
@@ -109,7 +113,7 @@ public class Fluid_Manager : MonoBehaviour
             buff0.Release();
         }
         if (Input.GetMouseButton(1)){
-            ComputeBuffer buff1 = new ComputeBuffer(numcells, sizeof(float) * 3);
+            ComputeBuffer buff1 = new ComputeBuffer(numcells, sizeof(float) * 4);
             buff1.SetData(cells0);
             painter.SetBuffer(1, "cells", buff1);
             Vector2 dp = Vector2.ClampMagnitude(pos - prev_pos, maxStir);
@@ -124,7 +128,7 @@ public class Fluid_Manager : MonoBehaviour
     }
     
     void cell_display(){
-        ComputeBuffer buff2 = new ComputeBuffer(numcells, sizeof(float) * 3);
+        ComputeBuffer buff2 = new ComputeBuffer(numcells, sizeof(float) * 4);
         buff2.SetData(cells0);
         celldisplay.SetInt("width", xres);
         celldisplay.SetInt("height", yres);
@@ -161,8 +165,8 @@ public class Fluid_Manager : MonoBehaviour
 
     void density_step(){
         // setting things in the shader and making the buffer
-        ComputeBuffer buff0 = new ComputeBuffer(numcells, sizeof(float) * 3);
-        ComputeBuffer buff1 = new ComputeBuffer(numcells, sizeof(float) * 3);
+        ComputeBuffer buff0 = new ComputeBuffer(numcells, sizeof(float) * 4);
+        ComputeBuffer buff1 = new ComputeBuffer(numcells, sizeof(float) * 4);
         buff0.SetData(cells0);
         diffuser.SetInt("width", xres);
         diffuser.SetInt("height", yres);
@@ -202,8 +206,8 @@ public class Fluid_Manager : MonoBehaviour
     }
 
     void velocity_step(){
-        ComputeBuffer buff0 = new ComputeBuffer(numcells, sizeof(float) * 3);
-        ComputeBuffer buff1 = new ComputeBuffer(numcells, sizeof(float) * 3);
+        ComputeBuffer buff0 = new ComputeBuffer(numcells, sizeof(float) * 4);
+        ComputeBuffer buff1 = new ComputeBuffer(numcells, sizeof(float) * 4);
         buff0.SetData(cells0);
         diffuser.SetInt("width", xres);
         diffuser.SetInt("height", yres);

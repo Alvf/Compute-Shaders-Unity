@@ -5,6 +5,7 @@ struct Cell{
     float den;
     float vx;
     float vy;
+    int bnd;
 };
 RWStructuredBuffer<Cell> cells;
 int width;
