@@ -5,6 +5,7 @@
 #pragma kernel Velo_from_project
 #pragma kernel Set_Bound_Velo
 #pragma kernel Set_Bound_p
+#pragma kernel Set_Bound_div
 
 struct Cell{
     float den;

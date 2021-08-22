@@ -7,8 +7,6 @@ ScriptsOnlyBuild:
     - UnityEditor.Recorder.GIFRecorderSettingsEditor
     - UnityEditor.Recorder.MovieRecorderEditor
     - UnityEditor.Recorder.MovieRecorderSettings
-    - UnityEditor.Recorder.RecorderControllerSettings
-    - UnityEditor.Recorder.RecorderSettingsPrefsEditor
     Unity.Rider.Editor.dll:
     - Packages.Rider.Editor.UnitTesting.CallbackData
     UnityEditor.TestRunner.dll:
@@ -414,7 +412,7 @@ ScriptsOnlyBuild:
     className: SignalTrack
   - hash:
       serializedVersion: 2
-      Hash: 4438ea08340ccbddd34feb8c9b97fcd0
+      Hash: fd65b065f613457299f9ab8c149f6f28
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Fluid_Manager
@@ -517,4 +515,4 @@ ScriptsOnlyBuild:
   platform: 19
   scenePathNames:
   - Assets/Scenes/Fluid_Maybe.unity
-  playerPath: C:/Users/alvin/Desktop/Unity_Projects/ShaderTest/WindBuild1/ShaderTest.exe
+  playerPath: C:/Users/alvin/Desktop/Unity_Projects/FluidsApp/ShaderTest.exe

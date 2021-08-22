@@ -24,6 +24,11 @@ float4 bkg;
 float4 inner;
 float lb;
 float ub;
+float4 wall_col;
+
+int pos(int x, int y){
+    return x + width * y;
+}
 
 float4 hsv_to_rgb(float h, float s ,float v){
     float c = s * (1 - abs(2 * v - 1));
@@ -52,6 +57,12 @@ float4 hsv_to_rgb(float h, float s ,float v){
     return float4((rgb0.x + m), (rgb0.y + m), (rgb0.z + m), 1);
 }
 
+void bnd_color(int x, int y){
+    if (cells[pos(x, y)].bnd){
+        Result[int2(x, y)] = wall_col;
+    }
+}
+
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
@@ -60,6 +71,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float4 res = float4(color.r * sat, color.g * sat, color.b * sat, color.a * sat);
     res = res + float4((1-sat) * bkg.r, (1-sat) * bkg.g, (1-sat) * bkg.b, (1-sat) * bkg.a);
     Result[id.xy] = res;
+    bnd_color(id.x, id.y);
 }
 
 [numthreads(8,8,1)]
@@ -78,6 +90,7 @@ void Velo_Color (uint3 id : SV_DispatchThreadID)
     H = (H + PI / 2) / (2 * PI) * 360;
 
     Result[id.xy] = hsv_to_rgb(H, sat, dark);
+    bnd_color(id.x, id.y);
 }
 
 [numthreads(8,8,1)]
@@ -95,4 +108,5 @@ void iso_Color(uint3 id : SV_DispatchThreadID)
     else{
         Result[id.xy] = bkg;
     }
+    bnd_color(id.x, id.y);
 }

@@ -2,28 +2,21 @@ Base path: 'C:/Program Files/Unity/Hub/Editor/2020.3.13f1/Editor/Data', plugins 
 Cmd: initializeCompiler
 
 Cmd: compileComputeKernel
-  insize=961 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Vorticity_Confinement.compute kernel=Vort_Conf cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0 ok=1 outsize=2611
+  insize=2549 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Cell_Drawer.compute kernel=Velo_Color cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0 ok=1 outsize=2266
 
 Cmd: compileComputeKernel
-  insize=1146 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Density_Inject.compute kernel=stir cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0 ok=1 outsize=1032
+  insize=4777 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Divergence.compute kernel=Set_Bound_div cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0  error: 1 plat 4 at Divergence.compute(80): signed/unsigned mismatch, unsigned assumed
+  error: 1 plat 4 at Divergence.compute(86): signed/unsigned mismatch, unsigned assumed
+  error: 1 plat 4 at Divergence.compute(114): signed/unsigned mismatch, unsigned assumed
+  error: 1 plat 4 at Divergence.compute(121): signed/unsigned mismatch, unsigned assumed
+  error: 1 plat 4 at Divergence.compute(151): signed/unsigned mismatch, unsigned assumed
+  error: 1 plat 4 at Divergence.compute(158): signed/unsigned mismatch, unsigned assumed
+ ok=1 outsize=1460
 
 Cmd: compileComputeKernel
-  insize=6656 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Diffusion.compute kernel=Diffuse_Velo cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0  error: 2 plat 4 at Diffusion.compute(78): invalid subscript 'bounds'
- ok=0 outsize=0
+  insize=1570 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Density_Inject.compute kernel=stir cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0 ok=1 outsize=1032
 
 Cmd: compileComputeKernel
-  insize=4862 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Divergence.compute kernel=Set_Bound_p cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0  error: 2 plat 4 at Divergence.compute(70): invalid subscript 'bounds'
- ok=0 outsize=0
-
-Cmd: compileComputeKernel
-  insize=7567 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Diffusion.compute kernel=Diffuse_Den cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0  error: 2 plat 4 at Diffusion.compute(80): invalid subscript 'bounds'
- ok=0 outsize=0
-
-Cmd: compileComputeKernel
-  insize=7519 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Diffusion.compute kernel=Advect_Den cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0  error: 1 plat 4 at Diffusion.compute(123): signed/unsigned mismatch, unsigned assumed
-  error: 1 plat 4 at Diffusion.compute(130): signed/unsigned mismatch, unsigned assumed
-  error: 1 plat 4 at Diffusion.compute(159): signed/unsigned mismatch, unsigned assumed
-  error: 1 plat 4 at Diffusion.compute(165): signed/unsigned mismatch, unsigned assumed
- ok=1 outsize=1629
+  insize=1870 file=C:/Users/alvin/Desktop/Git_Repos/Compute-Shaders-Unity/ShaderTest/Assets/Fluid_Compute/Density_Inject.compute kernel=stir cachingPP=1 ppOnly=0 stripLineD=0 buildPlatform=19 km=<UNITY_VERSION=202039> pKW=UNITY_ENABLE_REFLECTION_BUFFERS UNITY_USE_DITHER_MASK_FOR_ALPHABLENDED_SHADOWS UNITY_PBS_USE_BRDF1 UNITY_SPECCUBE_BOX_PROJECTION UNITY_SPECCUBE_BLENDING UNITY_ENABLE_DETAIL_NORMALMAP SHADER_API_DESKTOP UNITY_COLORSPACE_GAMMA UNITY_LIGHT_PROBE_PROXY_VOLUME UNITY_LIGHTMAP_FULL_HDR uKW=SHADER_STAGE_COMPUTE platform=d3d11 flags=0 ok=1 outsize=1032
 
 Cmd: shutdown

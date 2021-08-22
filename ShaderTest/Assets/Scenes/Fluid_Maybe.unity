@@ -237,9 +237,10 @@ MonoBehaviour:
   sat: 0.61
   dark: 0.47
   paintmax: 1
-  vorticity: 65
+  vorticity: 200
   color: {r: 1, g: 0.033067863, b: 0, a: 0}
   background: {r: 0, g: 0, b: 0, a: 0}
   inner: {r: 1, g: 0.8976302, b: 0.032075405, a: 0}
+  walls: {r: 0.5168387, g: 0.6405316, b: 0.6415094, a: 1}
   lower_iso: 0.1
   upper_iso: 0.275

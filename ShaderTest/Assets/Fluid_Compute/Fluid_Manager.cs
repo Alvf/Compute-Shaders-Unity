@@ -40,7 +40,7 @@ public class Fluid_Manager : MonoBehaviour
     public float dark;
     public float paintmax;
     public float vorticity;
-    public Color color, background, inner;
+    public Color color, background, inner, walls;
     public float lower_iso, upper_iso;
     int spacetoggle;
     // Start is called before the first frame update
@@ -89,7 +89,7 @@ public class Fluid_Manager : MonoBehaviour
         // Need to call subroutines
         cur_pos = Input.mousePosition;
         screen_interact(cur_pos, last_pos);
-        // source_placing();
+        source_placing();
         velocity_step();
         density_step();
         cell_display();
@@ -100,9 +100,10 @@ public class Fluid_Manager : MonoBehaviour
     void screen_interact(Vector2 pos, Vector2 prev_pos){
         float[] mousePos = {pos.x / Screen.width * xres, pos.y / Screen.height * yres};
         painter.SetFloats("mousePos", mousePos);
-        painter.SetInt("width", xres);
         painter.SetFloat("paintAmount", paintamount);
+        painter.SetFloat("paintmax", paintmax);
         painter.SetFloat("brushrad", brushrad);
+        painter.SetInt("width", xres);
 
         if (Input.GetMouseButton(0)){
             ComputeBuffer buff0 = new ComputeBuffer(numcells, sizeof(float) * 4);
@@ -120,10 +121,25 @@ public class Fluid_Manager : MonoBehaviour
             float[] dmouse = {dp.x, dp.y};
             painter.SetFloats("dmouse", dmouse);
             painter.SetFloat("stirrad", stirrad);
-            painter.SetFloat("paintmax", paintmax);
             painter.Dispatch(1, xres / 8, yres / 8, 1);
             buff1.GetData(cells0);
             buff1.Release();
+        }
+        if (Input.GetMouseButton(2)){
+            ComputeBuffer buff2 = new ComputeBuffer(numcells, sizeof(float) * 4);
+            buff2.SetData(cells0);
+            painter.SetBuffer(2, "cells", buff2);
+            painter.Dispatch(2, xres/8, yres/8, 1);
+            buff2.GetData(cells0);
+            buff2.Release();
+        }
+        if (Input.GetKey(KeyCode.Q)){
+            ComputeBuffer buff3 = new ComputeBuffer(numcells, sizeof(float) * 4);
+            buff3.SetData(cells0);
+            painter.SetBuffer(3, "cells", buff3);
+            painter.Dispatch(3, xres/8, yres/8, 1);
+            buff3.GetData(cells0);
+            buff3.Release();
         }
     }
     
@@ -137,9 +153,11 @@ public class Fluid_Manager : MonoBehaviour
         float[] col = {color.r, color.g, color.b , color.a};
         float[] bkg = {background.r, background.g, background.b, background.a};
         float[] ins = {inner.r, inner.g, inner.b, inner.a};
+        float[] wall = {walls.r, walls.g, walls.b, walls.a};
         celldisplay.SetFloats("color", col);
         celldisplay.SetFloats("bkg", bkg);
         celldisplay.SetFloats("inner", ins);
+        celldisplay.SetFloats("wall_col", wall);
         celldisplay.SetFloat("lb", lower_iso);
         celldisplay.SetFloat("ub", upper_iso);
 
@@ -179,12 +197,15 @@ public class Fluid_Manager : MonoBehaviour
             if (i % 2 == 0){
                 diffuser.SetBuffer(0, "cells_in", buff0);
                 diffuser.SetBuffer(0, "cells_out", buff1);
+                diffuser.SetBuffer(4, "cells_out", buff1);
             }
             else{
                 diffuser.SetBuffer(0, "cells_in", buff1);
                 diffuser.SetBuffer(0, "cells_out", buff0);
+                diffuser.SetBuffer(4, "cells_out", buff0);
             }
             diffuser.Dispatch(0, xres/8, yres/8 , 1); 
+            diffuser.Dispatch(4, xres/8, yres/8, 1);
         }
         if (Diffusion_Jacobi_Steps % 2 == 1){
             buff1.GetData(cells0);
@@ -197,7 +218,9 @@ public class Fluid_Manager : MonoBehaviour
         // advection
         diffuser.SetBuffer(2, "cells_in", buff0);
         diffuser.SetBuffer(2, "cells_out", buff1);
+        diffuser.SetBuffer(4, "cells_out", buff1);
         diffuser.Dispatch(2, xres/8, yres/8, 1);
+        diffuser.Dispatch(4, xres/8, yres/8, 1);
 
         buff1.GetData(cells0); //cells0 now has the most updated cell info
 
@@ -220,12 +243,15 @@ public class Fluid_Manager : MonoBehaviour
             if (i % 2 == 0){
                 diffuser.SetBuffer(1, "cells_in", buff0);
                 diffuser.SetBuffer(1, "cells_out", buff1);
+                diffuser.SetBuffer(5, "cells_out", buff1);
             }
             else{
                 diffuser.SetBuffer(1, "cells_in", buff1);
                 diffuser.SetBuffer(1, "cells_out", buff0);
+                diffuser.SetBuffer(5, "cells_out", buff0);
             }
-            diffuser.Dispatch(1, xres/8, yres/8 , 1); 
+            diffuser.Dispatch(1, xres/8, yres/8, 1); 
+            diffuser.Dispatch(5, xres/8, yres/8, 1);
         }
         if (Diffusion_Jacobi_Steps % 2 == 1){
             buff1.GetData(cells0);
@@ -240,7 +266,9 @@ public class Fluid_Manager : MonoBehaviour
         //advection
         diffuser.SetBuffer(3, "cells_in", buff0);
         diffuser.SetBuffer(3, "cells_out", buff1);
+        diffuser.SetBuffer(5, "cells_out", buff1);
         diffuser.Dispatch(3, xres / 8, yres / 8, 1);
+        diffuser.Dispatch(5, xres / 8, yres / 8, 1);
 
         //vorticity confinement
         vort_conf.SetBuffer(0, "cells", buff1);
@@ -266,22 +294,31 @@ public class Fluid_Manager : MonoBehaviour
         projector.SetBuffer(0, "cells_in", buff0);
         projector.SetBuffer(0, "div", dbuff);
         projector.SetBuffer(0, "p_in", pbuff0);
+
+        projector.SetBuffer(5, "div", dbuff);
+        projector.SetBuffer(5, "cells_in", buff0);
+
         projector.SetInt("width", xres);
         projector.SetInt("height", yres);
 
         projector.Dispatch(0, xres / 8, yres / 8, 1); //dbuff and pbuff0 are now set
+        projector.Dispatch(5, xres / 8, yres / 8, 1); //div bound conditions
 
         projector.SetBuffer(1, "div", dbuff);
+        projector.SetBuffer(4, "cells_in", buff0);
         for (int i = 0 ; i < Diffusion_Jacobi_Steps; i++){ //jacobi loops for making p more accurate
             if (i % 2 == 0){
                 projector.SetBuffer(1, "p_in", pbuff0);
                 projector.SetBuffer(1, "p_out", pbuff1);
+                projector.SetBuffer(4, "p_out", pbuff1);
             }
             else{
                 projector.SetBuffer(1, "p_in", pbuff1);
                 projector.SetBuffer(1, "p_out", pbuff0);
+                projector.SetBuffer(4, "p_out", pbuff0);
             }
-            projector.Dispatch(1, xres/8, yres/8 , 1); 
+            projector.Dispatch(1, xres/8, yres/8, 1);
+            projector.Dispatch(4, xres/8, yres/8, 1); 
         }
         if (Diffusion_Jacobi_Steps % 2 == 1){
             pbuff1.GetData(p0);
@@ -293,7 +330,9 @@ public class Fluid_Manager : MonoBehaviour
 
         projector.SetBuffer(2, "p_in", pbuff0);
         projector.SetBuffer(2, "cells_in", buff0);
+        projector.SetBuffer(3, "cells_in", buff0);
         projector.Dispatch(2, xres/8, yres/8, 1); //buff 0 has now been projected.
+        projector.Dispatch(3, xres/8, yres/8, 1); //boundary conditions post projection
 
         pbuff0.Release();
         pbuff1.Release();

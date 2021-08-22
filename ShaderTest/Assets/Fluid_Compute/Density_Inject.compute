@@ -1,6 +1,8 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 #pragma kernel stir
+#pragma kernel wall_draw
+#pragma kernel wall_erase
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
@@ -20,18 +22,18 @@ int width;
 
 float2 dmouse;
 
-[numthreads(8,8,1)]
+[numthreads(8,8,1)] //ID 0: injects density into fluid
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     int u = mousePos.x - id.x;
     int v = mousePos.y - id.y;
-    if(u* u + v * v <= brushrad * brushrad){
+    if(u * u + v * v <= brushrad * brushrad){
         int pos = id.x + id.y * width;
         cells[pos].den = min(cells[pos].den + paintAmount, paintmax);
     }
 }
 
-[numthreads(8,8,1)]
+[numthreads(8,8,1)] //ID 1: stirs fluid ("velocity injection")
 void stir (uint3 id : SV_DispatchThreadID)
 {
     int u = mousePos.x - id.x;
@@ -42,5 +44,25 @@ void stir (uint3 id : SV_DispatchThreadID)
         int pos = id.x + id.y * width;
         cells[pos].vx += dmouse.x * (1 - rad2 / stirrad2);
         cells[pos].vy += dmouse.y * (1 - rad2 / stirrad2);
+    }
+}
+
+[numthreads(8, 8, 1)] //ID 2: creates walls
+void wall_draw (uint3 id : SV_DispatchThreadID){
+    int u = mousePos.x - id.x;
+    int v = mousePos.y - id.y;
+    if (u * u + v * v <= brushrad / 2 * brushrad / 2){
+        int pos = id.x + id.y * width;
+        cells[pos].bnd = 1;
+    }
+}
+
+[numthreads(8, 8, 1)] //ID 3: erases walls
+void wall_erase (uint3 id : SV_DispatchThreadID){
+    int u = mousePos.x - id.x;
+    int v = mousePos.y - id.y;
+    if (u * u + v * v <= brushrad / 2 * brushrad / 2){
+        int pos = id.x + id.y * width;
+        cells[pos].bnd = 0;
     }
 }
